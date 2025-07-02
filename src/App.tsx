@@ -6,7 +6,6 @@ import {
   Box,
   Tabs,
   Tab,
-  CircularProgress,
   AppBar,
   Toolbar,
   Link,
@@ -100,20 +99,6 @@ function App() {
   };
   const percentageChange = calculatePercentageChange();
 
-  if (auth.loading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <CircularProgress size={60} />
-      </Box>
-    );
-  }
   const { currentUser, logout } = auth;
   // Load entries from Firebase when user is authenticated
   useEffect(() => {

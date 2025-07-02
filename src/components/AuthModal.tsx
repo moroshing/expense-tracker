@@ -1,144 +1,128 @@
 import { useState } from "react";
-import {
-  Modal,
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Divider,
-  Stack,
-} from "@mui/material";
-import { Google } from "@mui/icons-material";
+import { Form, Input, Button, Divider, Typography } from "antd";
+import { GoogleOutlined } from "@ant-design/icons";
 import { useAuth } from "../context/AuthContext";
 
-const style = {
-  position: "absolute" as const,
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: 420,
-  bgcolor: "background.paper",
-  boxShadow: 8,
-  borderRadius: 3,
-  p: 4,
-};
-
 export default function AuthModal() {
-  const [open, setOpen] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const { login, googleLogin } = useAuth();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { login, register, googleLogin } = useAuth();
 
-  const handleClose = () => setOpen(false);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (values: { email: string; password: string }) => {
+    setLoading(true);
     try {
-      await login(email, password);
-      handleClose();
-    } catch (error) {
-      alert("Failed to login: " + error);
+      if (isRegistering) {
+        await register(values.email, values.password);
+        alert("Registration successful! You can now log in.");
+        setIsRegistering(false);
+      } else {
+        await login(values.email, values.password);
+      }
+    } catch (error: any) {
+      if (error.code === "auth/email-already-in-use") {
+        alert("This email is already registered. Please try logging in.");
+      } else {
+        alert("Failed: " + error.message || error);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
       await googleLogin();
-      handleClose();
     } catch (error) {
       alert("Failed to login with Google: " + error);
     }
   };
 
   return (
-    <Modal
-      open={open}
-      onClose={(_, reason) => {
-        if (reason !== "backdropClick") {
-          setOpen(false);
-        }
-      }}
-    >
-      <Box sx={style}>
-        <Typography
-          variant="overline"
-          align="center"
-          display="block"
-          color="primary"
-          fontWeight={700}
-          letterSpacing={1}
-          mb={1}
+    <div className="auth-modal-container">
+      <Typography.Text
+        style={{
+          display: "block",
+          textAlign: "center",
+          color: "#1677ff",
+          fontWeight: 700,
+          fontSize: 17,
+          letterSpacing: 1,
+          marginTop: 10,
+        }}
+      >
+        FINIFY.IO
+      </Typography.Text>
+
+      <Typography.Title
+        level={4}
+        style={{ textAlign: "center", marginBottom: 8, marginTop: 0 }}
+      >
+        {isRegistering ? "REGISTER" : "SIGN IN"}
+      </Typography.Title>
+
+      <Typography.Paragraph style={{ textAlign: "center", marginBottom: 15 }}>
+        {isRegistering
+          ? "Start tracking your finances today."
+          : "Track your income and expenses seamlessly"}
+      </Typography.Paragraph>
+
+      <Form layout="vertical" onFinish={handleSubmit} size="small">
+        <Form.Item
+          label="Email Address"
+          name="email"
+          rules={[{ required: true, message: "Please input your email!" }]}
         >
-          Finify.io
-        </Typography>
-        <Typography variant="h6" align="center" fontWeight={600} mb={1.5}>
-          Sign In
-        </Typography>
-        <Typography
-          variant="body2"
-          align="center"
-          color="text.secondary"
-          mb={3}
+          <Input type="email" autoFocus />
+        </Form.Item>
+
+        <Form.Item
+          label="Password"
+          name="password"
+          rules={[{ required: true, message: "Please input your password!" }]}
         >
-          Track your income and expenses seamlessly
-        </Typography>
+          <Input.Password />
+        </Form.Item>
 
-        <form onSubmit={handleLogin}>
-          <Stack spacing={2}>
-            <TextField
-              label="Email Address"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              fullWidth
-              variant="outlined"
-              autoFocus
-              InputProps={{ sx: { borderRadius: 2 } }}
-              required
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputProps={{ sx: { borderRadius: 2 } }}
-              required
-            />
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              sx={{
-                borderRadius: 2,
-                textTransform: "none",
-                fontWeight: 500,
-                py: 1.2,
-              }}
-            >
-              LOGIN
-            </Button>
-          </Stack>
-        </form>
+        <Form.Item>
+          <Button
+            style={{ marginTop: 15 }}
+            type="primary"
+            htmlType="submit"
+            block
+            loading={loading}
+            size="middle"
+          >
+            {isRegistering ? "REGISTER" : "LOGIN"}
+          </Button>
+        </Form.Item>
+      </Form>
 
-        <Divider sx={{ my: 3 }}>or</Divider>
+      <Divider plain style={{ margin: "12px 0" }}>
+        or
+      </Divider>
 
+      <Button
+        icon={<GoogleOutlined />}
+        block
+        onClick={handleGoogleLogin}
+        size="middle"
+      >
+        Continue with Google
+      </Button>
+
+      <Typography.Paragraph
+        style={{ textAlign: "center", marginTop: 16, fontSize: 13 }}
+      >
+        {isRegistering ? "Already have an account?" : "Don't have an account?"}{" "}
         <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<Google />}
-          onClick={handleGoogleLogin}
-          sx={{
-            borderRadius: 2,
-            textTransform: "none",
-            fontWeight: 500,
-            py: 1.2,
-          }}
+          type="link"
+          onClick={() => setIsRegistering(!isRegistering)}
+          size="small"
+          style={{ padding: 0 }}
         >
-          Continue with Google
+          {isRegistering ? "Login" : "Register"}
         </Button>
-      </Box>
-    </Modal>
+      </Typography.Paragraph>
+    </div>
   );
 }
